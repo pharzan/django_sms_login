@@ -61,9 +61,10 @@ class Verify(View):
             requested_phone_number = json_data['phone_number']
             verification_code = json_data['phone_number']
             query_result = Users.objects.filter(
-                phone_number=requested_phone_number).values()
-            print(query_result)
-            return JsonResponse({'status': 200})
+                phone_number=requested_phone_number).values()[0]
+            if(query_result['four_digit_code'] == json_data['verification_code']):
+                is_verified=True
+            return JsonResponse({'status': 200,'verified':is_verified})
 
         return JsonResponse({
             'status': 999,

@@ -4,11 +4,12 @@ from django.http import JsonResponse
 from django.views import View
 import json
 from sms_login.models import Users
+import random
 
 
-# the following function creates a random four digit code
-# this function is supposed to be taken care of by the sms provider.
 def random_code():
+    # the following function creates a random four digit code
+    # this function is supposed to be taken care of by the sms provider.
     codes = [random.choice(range(10)) for r in range(4)]
     return "".join(str(c) for c in codes)
 
@@ -20,20 +21,51 @@ class Create(View):
 
     def post(self, request):
         # post logic
-        json_data = json.loads(request.body) # convert post incoming data to json
-        if('phone_number' in json_data):
+        json_data = json.loads(
+            request.body)  # convert post incoming data to json
+        if ('phone_number' in json_data
+            ):  # make usre phone number is sent from client
             is_new_user = False
             requested_phone_number = json_data['phone_number']
-            query_result = Users.objects.filter(phone_number=requested_phone_number)
-
-            if len(query_result)==0:
+            query_result = Users.objects.filter(
+                phone_number=requested_phone_number).values()
+            four_digit_code = random_code()
+            if len(query_result) == 0:
                 # phone number not in db : new user
                 # new_user created pk = 1 and so on...
                 is_new_user = True
-                new_user = Users(phone_number=requested_phone_number)
+                new_user = Users(
+                    phone_number=requested_phone_number,
+                    four_digit_code=four_digit_code)
                 new_user.save()
-            
-            return JsonResponse({'code': random_code(),'status':200,'is_new_user':is_new_user})
+            else:
+                Users.objects.filter(phone_number=requested_phone_number).update(four_digit_code=four_digit_code)
 
-        return JsonResponse({'status': 200, 'messge': 'need phone number'})
-import random
+            return JsonResponse({
+                'code': four_digit_code,
+                'status': 200,
+                'is_new_user': is_new_user
+            })
+
+        return JsonResponse({'status': 999, 'messge': 'need phone number'})
+
+
+class Verify(View):
+    def post(self, request):
+        is_verified = False
+        json_data = json.loads(
+            request.body)  # convert post incoming data to json
+
+        if 'verification_code' in json_data and 'phone_number' in json_data:
+            # handle compare from db to see if code is right
+            requested_phone_number = json_data['phone_number']
+            verification_code = json_data['phone_number']
+            query_result = Users.objects.filter(
+                phone_number=requested_phone_number).values()
+            print(query_result)
+            return JsonResponse({'status': 200})
+
+        return JsonResponse({
+            'status': 999,
+            'messge': 'need verification code and phone number'
+        })

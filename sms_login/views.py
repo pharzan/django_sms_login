@@ -4,7 +4,7 @@ from django.http import JsonResponse
 from django.views import View
 import json
 from sms_login.models import Users
-import random
+import random, hashlib
 
 
 def random_code():
@@ -12,6 +12,10 @@ def random_code():
     # this function is supposed to be taken care of by the sms provider.
     codes = [random.choice(range(10)) for r in range(4)]
     return "".join(str(c) for c in codes)
+
+
+def generate_token(phone_number):
+    return hashlib.sha256(phone_number.encode()).hexdigest()
 
 
 class Create(View):
@@ -39,7 +43,8 @@ class Create(View):
                     four_digit_code=four_digit_code)
                 new_user.save()
             else:
-                Users.objects.filter(phone_number=requested_phone_number).update(four_digit_code=four_digit_code)
+                Users.objects.filter(phone_number=requested_phone_number
+                                     ).update(four_digit_code=four_digit_code)
 
             return JsonResponse({
                 'code': four_digit_code,
@@ -58,13 +63,21 @@ class Verify(View):
 
         if 'verification_code' in json_data and 'phone_number' in json_data:
             # handle compare from db to see if code is right
-            requested_phone_number = json_data['phone_number']
-            verification_code = json_data['phone_number']
+            phone_number = json_data['phone_number']
+            verification_code = json_data['verification_code']
             query_result = Users.objects.filter(
-                phone_number=requested_phone_number).values()[0]
-            if(query_result['four_digit_code'] == json_data['verification_code']):
-                is_verified=True
-            return JsonResponse({'status': 200,'verified':is_verified})
+                phone_number=phone_number).values()[0]
+
+            if (query_result['four_digit_code'] == verification_code):
+
+                is_verified = True
+                token = generate_token(phone_number.join(verification_code))
+                return JsonResponse({
+                    'status': 200,
+                    'verified': is_verified,
+                    'token': token
+                })
+            return JsonResponse({'status': 200, 'verified': is_verified})
 
         return JsonResponse({
             'status': 999,

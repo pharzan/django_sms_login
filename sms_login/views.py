@@ -83,3 +83,16 @@ class Verify(View):
             'status': 999,
             'messge': 'need verification code and phone number'
         })
+
+
+class Authorize(View):
+    def get(self, request):
+        # request.META holds the headers and to access a custom
+        # header HTTP_ >> followed by custom header, Here I'm
+        # checking for TOKEN in the header
+        if 'HTTP_TOKEN' in request.META:
+            token = request.META['HTTP_TOKEN']
+            print('found token')
+            return JsonResponse({'status': 200, 'token': token})
+            
+        return JsonResponse({'status': 999, 'message': 'not authorized'})

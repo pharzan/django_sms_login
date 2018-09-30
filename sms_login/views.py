@@ -3,7 +3,7 @@ from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse
 from django.views import View
 import json
-from sms_login.models import Users,Tokens
+from sms_login.models import Users, Tokens
 import random, hashlib
 
 
@@ -42,21 +42,29 @@ class Create(View):
                     four_digit_code=four_digit_code)
                 new_user.save()
             else:
-                Users.objects.filter(phone_number=requested_phone_number).update(four_digit_code=four_digit_code)
+                Users.objects.filter(phone_number=requested_phone_number
+                                     ).update(four_digit_code=four_digit_code)
 
-            return JsonResponse({
-                'code': four_digit_code,
-                'status': 200,
-                'is_new_user': is_new_user
-            }, status = 200)
+            return JsonResponse(
+                {
+                    'code': four_digit_code,
+                    'status': 200,
+                    'is_new_user': is_new_user
+                },
+                status=200)
 
-        return JsonResponse({'status': 999, 'messge': 'need phone number'}, status = 422)
+        return JsonResponse(
+            {
+                'status': 999,
+                'messge': 'need phone number'
+            }, status=422)
 
 
 class Verify(View):
     def post(self, request):
         is_verified = False
-        json_data = json.loads(request.body)  # convert post incoming data to json
+        json_data = json.loads(
+            request.body)  # convert post incoming data to json
 
         if 'verification_code' in json_data and 'phone_number' in json_data:
             # handle compare from db to see if code is right
@@ -82,12 +90,18 @@ class Verify(View):
                     'token': token
                 })
 
-            return JsonResponse({'status': 999, 'verified': is_verified},status=422)
+            return JsonResponse(
+                {
+                    'status': 999,
+                    'verified': is_verified
+                }, status=422)
 
-        return JsonResponse({
-            'status': 999,
-            'messge': 'need verification code and phone number'
-        })
+        return JsonResponse(
+            {
+                'status': 999,
+                'messge': 'need verification code and phone number'
+            },
+            status=422)
 
 
 class Authorize(View):
@@ -99,11 +113,18 @@ class Authorize(View):
             token = request.META['HTTP_TOKEN']
             token_result = Tokens.objects.filter(token=token)
             user = Users.objects.filter(id=token_result[0].user.id)
-            if len(token_result)>0:
+            if len(token_result) > 0:
                 return JsonResponse({
-                    'status': 200,
-                    'token': token,
-                    'phone_number': token_result[0].user.phone_number
+                    'status':
+                    200,
+                    'token':
+                    token,
+                    'phone_number':
+                    token_result[0].user.phone_number
                 })
 
-        return JsonResponse({'status': 999, 'message': 'not authorized'})
+        return JsonResponse(
+            {
+                'status': 999,
+                'message': 'not authorized'
+            }, status=401)

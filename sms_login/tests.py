@@ -1,24 +1,35 @@
 #!/usr/bin/env python3
 
-from sms_login.models import Users
+
+from sms_login.models import Users, Tokens
 from django.urls import reverse, resolve
 import json
 from django.test import TestCase, Client
+import requests
+import unittest
+
 
 client = Client()
 
 
-class UserTestCase(TestCase):
+class UserTestCase(unittest.TestCase):
+
     def setUp(self):
+
         self.valid_payload = {
             'phone_number': '0914123456',
         }
+
         self.existing_payload = {
             'phone_number': '09143134604',
         }
+
         self.invalid_payload = {
             'name': '2311413223',
         }
+        Users.objects.create(phone_number='09123456789',four_digit_code='1234')
+        Tokens.objects.create(user_id=1, token='1abcdef',)
+
 
     def test_create_valid_code(self):
         response = client.post(
@@ -41,6 +52,24 @@ class UserTestCase(TestCase):
             '/api/login/create', content_type='application/json')
         self.assertEqual(response.status_code, 422)
 
+    def test_existing_verification_code_valid(self):
+        response = client.post(
+            '/api/login/verify',
+            data={'phone_number': '09123456789',
+                    'verification_code': '1234'
+            },
+            content_type='application/json')
+        self.assertEqual(response.status_code, 200)
+
+    def test_existing_verification_code_invalid(self):
+        response = client.post(
+            '/api/login/verify',
+            data={'phone_number': '09123456789',
+                    'verification_code': '4321'
+            },
+            content_type='application/json')
+        self.assertEqual(response.status_code, 422)
+
     def test_valid_verification_token_creation(self):
         response = client.post(
             '/api/login/create',
@@ -57,6 +86,7 @@ class UserTestCase(TestCase):
             },
             content_type='application/json')
         self.assertEqual(response.status_code, 200)
+        return json.loads(response.content)
 
     def test_invalid_verification_token_creation(self):
         response = client.post(
@@ -73,3 +103,14 @@ class UserTestCase(TestCase):
                 "verification_code": '1234'            },
             content_type='application/json')
         self.assertEqual(response.status_code, 422)
+
+    def test_authorize(self):
+        response = client.get(
+            "/api/login/auth",
+            HTTP_TOKEN= '1abcdef',
+            content_type='application/json')
+        self.assertEqual(response.status, 200)
+
+
+if __name__ == '__main__':
+    unittest.main()

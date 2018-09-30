@@ -99,7 +99,14 @@ class Authorize(View):
         # checking for TOKEN in the header
         if 'HTTP_TOKEN' in request.META:
             token = request.META['HTTP_TOKEN']
-            print('found token')
-            return JsonResponse({'status': 200, 'token': token})
+            token_result = Tokens.objects.filter(token=token)
+            user = Users.objects.filter(id=token_result.values('user')[0]['user'])
+
+            if len(token_result)>0:
+                return JsonResponse({
+                    'status': 200,
+                    'token': token,
+                    'phone_number': user.values('phone_number')[0]['phone_number']
+                })
 
         return JsonResponse({'status': 999, 'message': 'not authorized'})

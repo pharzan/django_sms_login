@@ -12,3 +12,4 @@ class Users(models.Model):
 class Tokens(models.Model):
     token = models.CharField(max_length=15)
     user = models.ForeignKey(Users, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now=True)

@@ -145,3 +145,11 @@ class Authorize(View):
                 'status': 999,
                 'message': 'not authorized'
             }, status=401)
+
+
+from django.contrib.auth import logout
+class UnAuthorize(View):
+    def get(self, request):
+        logout(request)
+        return JsonResponse({"message":"Logged out"})
+        pass

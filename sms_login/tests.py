@@ -110,8 +110,9 @@ class UserTestCase(unittest.TestCase):
             HTTP_TOKEN= '1abcdef',
             content_type='application/json')
         response_content = json.loads(response.content)
-        print(response_content)
+        
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_content['phone_number'], '09123456789')
 
     def test_unauthorize(self):
         response = client.get(

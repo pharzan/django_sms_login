@@ -82,7 +82,7 @@ class Verify(View):
                     'token': token
                 })
 
-            return JsonResponse({'status': 200, 'verified': is_verified})
+            return JsonResponse({'status': 999, 'verified': is_verified},status=422)
 
         return JsonResponse({
             'status': 999,

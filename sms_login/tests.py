@@ -109,7 +109,18 @@ class UserTestCase(unittest.TestCase):
             "/api/login/auth",
             HTTP_TOKEN= '1abcdef',
             content_type='application/json')
-        self.assertEqual(response.status, 200)
+        response_content = json.loads(response.content)
+        print(response_content)
+        self.assertEqual(response.status_code, 200)
+
+    def test_unauthorize(self):
+        response = client.get(
+            "/api/login/auth",
+            HTTP_TOKEN= 'kdfsjgfskjah32i4',
+            content_type='application/json')
+        self.assertEqual(response.status_code, 401)
+
+
 
 
 if __name__ == '__main__':

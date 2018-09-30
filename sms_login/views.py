@@ -112,8 +112,8 @@ class Authorize(View):
         if 'HTTP_TOKEN' in request.META:
             token = request.META['HTTP_TOKEN']
             token_result = Tokens.objects.filter(token=token)
-            user = Users.objects.filter(id=token_result[0].user.id)
             if len(token_result) > 0:
+                # user = Users.objects.filter(id=token_result[0].user.id)
                 return JsonResponse({
                     'status':
                     200,

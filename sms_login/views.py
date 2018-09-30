@@ -3,7 +3,7 @@ from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse
 from django.views import View
 import json
-from sms_login.models import Users
+from sms_login.models import Users,Tokens
 import random, hashlib
 
 
@@ -27,8 +27,7 @@ class Create(View):
         # post logic
         json_data = json.loads(
             request.body)  # convert post incoming data to json
-        if ('phone_number' in json_data
-            ):  # make usre phone number is sent from client
+        if 'phone_number' in json_data:  # make usre phone number is sent from client
             is_new_user = False
             requested_phone_number = json_data['phone_number']
             query_result = Users.objects.filter(
@@ -42,6 +41,7 @@ class Create(View):
                     phone_number=requested_phone_number,
                     four_digit_code=four_digit_code)
                 new_user.save()
+
             else:
                 Users.objects.filter(phone_number=requested_phone_number
                                      ).update(four_digit_code=four_digit_code)
@@ -65,13 +65,20 @@ class Verify(View):
             # handle compare from db to see if code is right
             phone_number = json_data['phone_number']
             verification_code = json_data['verification_code']
-            query_result = Users.objects.filter(
-                phone_number=phone_number).values()[0]
+            user_result = Users.objects.filter(phone_number=phone_number)
 
-            if (query_result['four_digit_code'] == verification_code):
+            if user_result.values()[0]['four_digit_code'] == verification_code:
 
                 is_verified = True
                 token = generate_token(phone_number.join(verification_code))
+                token_in_db = Tokens.objects.filter(token=token)
+                token_exists = False
+                if len(token_in_db) > 0:
+                    token_exists = True
+                if not token_exists:
+                    new_token = Tokens(token=token, user=user_result[0])
+                    new_token.save()
+
                 return JsonResponse({
                     'status': 200,
                     'verified': is_verified,
@@ -94,5 +101,5 @@ class Authorize(View):
             token = request.META['HTTP_TOKEN']
             print('found token')
             return JsonResponse({'status': 200, 'token': token})
-            
+
         return JsonResponse({'status': 999, 'message': 'not authorized'})

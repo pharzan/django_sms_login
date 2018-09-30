@@ -41,25 +41,22 @@ class Create(View):
                     phone_number=requested_phone_number,
                     four_digit_code=four_digit_code)
                 new_user.save()
-
             else:
-                Users.objects.filter(phone_number=requested_phone_number
-                                     ).update(four_digit_code=four_digit_code)
+                Users.objects.filter(phone_number=requested_phone_number).update(four_digit_code=four_digit_code)
 
             return JsonResponse({
                 'code': four_digit_code,
                 'status': 200,
                 'is_new_user': is_new_user
-            })
+            }, status = 200)
 
-        return JsonResponse({'status': 999, 'messge': 'need phone number'})
+        return JsonResponse({'status': 999, 'messge': 'need phone number'}, status = 422)
 
 
 class Verify(View):
     def post(self, request):
         is_verified = False
-        json_data = json.loads(
-            request.body)  # convert post incoming data to json
+        json_data = json.loads(request.body)  # convert post incoming data to json
 
         if 'verification_code' in json_data and 'phone_number' in json_data:
             # handle compare from db to see if code is right
@@ -84,6 +81,7 @@ class Verify(View):
                     'verified': is_verified,
                     'token': token
                 })
+
             return JsonResponse({'status': 200, 'verified': is_verified})
 
         return JsonResponse({

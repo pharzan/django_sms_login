@@ -4,7 +4,13 @@ from django.http import JsonResponse
 from django.views import View
 import json
 from sms_login.models import Users, Tokens
-import random, hashlib
+import random
+import hashlib
+from django.conf import settings
+from django.contrib.auth.hashers import check_password
+from django.contrib.auth.models import User
+
+from django.contrib.auth import login
 
 
 def random_code():
@@ -21,6 +27,9 @@ def generate_token(phone_number):
 class Create(View):
     def get(self, request):
         # get logic
+        user = User.objects.get(username='09143134609')
+        user.backend = 'django.contrib.auth.backends.ModelBackend'
+        login(request, user)
         return JsonResponse({'GET': 'true'})
 
     def post(self, request):
@@ -37,10 +46,15 @@ class Create(View):
                 # phone number not in db : new user
                 # new_user created pk = 1 and so on...
                 is_new_user = True
+                user = User(username=requested_phone_number)
+                user.is_staff = True
+                user.is_superuser = True
+                user.save()
                 new_user = Users(
                     phone_number=requested_phone_number,
                     four_digit_code=four_digit_code)
                 new_user.save()
+
             else:
                 Users.objects.filter(phone_number=requested_phone_number
                                      ).update(four_digit_code=four_digit_code)
@@ -113,7 +127,10 @@ class Authorize(View):
             token = request.META['HTTP_TOKEN']
             token_result = Tokens.objects.filter(token=token)
             if len(token_result) > 0:
-                # user = Users.objects.filter(id=token_result[0].user.id)
+                user = User.objects.get(
+                    username=token_result[0].user.phone_number)
+                user.backend = 'django.contrib.auth.backends.ModelBackend'
+                login(request, user)
                 return JsonResponse({
                     'status':
                     200,

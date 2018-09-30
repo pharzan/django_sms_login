@@ -34,7 +34,6 @@ class UserTestCase(unittest.TestCase):
             phone_number=self.dummy_phone, four_digit_code=self.dummy_code)
         Tokens.objects.create(user_id=1, token=self.dummy_token,)
 
-
     def test_create_valid_code(self):
         response = client.post(
             '/api/login/create',
@@ -60,8 +59,8 @@ class UserTestCase(unittest.TestCase):
         response = client.post(
             '/api/login/verify',
             data={'phone_number': self.dummy_phone,
-                    'verification_code': self.dummy_code
-            },
+                  'verification_code': self.dummy_code
+                  },
             content_type='application/json')
         self.assertEqual(response.status_code, 200)
 
@@ -69,8 +68,8 @@ class UserTestCase(unittest.TestCase):
         response = client.post(
             '/api/login/verify',
             data={'phone_number': self.dummy_phone,
-                    'verification_code': '4321'
-            },
+                  'verification_code': '4321'
+                  },
             content_type='application/json')
         self.assertEqual(response.status_code, 422)
 
@@ -104,14 +103,14 @@ class UserTestCase(unittest.TestCase):
             '/api/login/verify',
             data={
                 "phone_number": "09143134604",
-                "verification_code": self.dummy_code            },
+                "verification_code": self.dummy_code},
             content_type='application/json')
         self.assertEqual(response.status_code, 422)
 
     def test_authorize(self):
         response = client.get(
             "/api/login/auth",
-            HTTP_TOKEN= self.dummy_token,
+            HTTP_TOKEN=self.dummy_token,
             content_type='application/json')
         response_content = json.loads(response.content)
 
@@ -121,11 +120,9 @@ class UserTestCase(unittest.TestCase):
     def test_unauthorize(self):
         response = client.get(
             "/api/login/auth",
-            HTTP_TOKEN= '35mnb4jh6tuy76ghb',
+            HTTP_TOKEN='35mnb4jh6tuy76ghb',
             content_type='application/json')
         self.assertEqual(response.status_code, 401)
-
-
 
 
 if __name__ == '__main__':

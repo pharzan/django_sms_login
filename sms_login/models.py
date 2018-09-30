@@ -9,6 +9,7 @@ class Users(models.Model):
     def __str__(self):
         return self.phone_number
 
+
 class Tokens(models.Model):
     token = models.CharField(max_length=15)
     user = models.ForeignKey(Users, on_delete=models.CASCADE)

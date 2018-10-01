@@ -10,6 +10,8 @@ from django.conf import settings
 from django.contrib.auth.hashers import check_password
 from django.contrib.auth.models import User
 
+from datetime import datetime, timedelta
+
 from django.contrib.auth import login
 
 
@@ -115,6 +117,7 @@ class Verify(View):
             status=422)
 
 
+
 class Authorize(View):
     def get(self, request):
         # request.META holds the headers and to access a custom
@@ -123,13 +126,21 @@ class Authorize(View):
         if 'HTTP_TOKEN' in request.META:
             token = request.META['HTTP_TOKEN']
             token_result = Tokens.objects.filter(token=token)
+            time_span = datetime.now() - token_result[0].created_at.replace(tzinfo=None)
+
+            if time_span.days > 30:
+                return JsonResponse(
+                    {
+                        'status': 401,
+                        'message': 'token expired'
+                    }, status=401)
+
             if token_result.exists():
-                # user = User.objects.get(
-                    # username=token_result[0].user.phone_number)
-                print('here', token_result[0].user.phone_number)
+                user = User.objects.get(
+                    username=token_result[0].user.phone_number)
                 # The following lines are responsible for logging the user in to django 
-                # user.backend = 'django.contrib.auth.backends.ModelBackend'
-                # login(request, user)
+                user.backend = 'django.contrib.auth.backends.ModelBackend'
+                login(request, user)
 
                 return JsonResponse({
                     'status':

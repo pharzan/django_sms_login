@@ -1,4 +1,4 @@
-# django_sms_login
+# Django password less login (four digit SMS verification code)
 ### An API based Django dashboard login with no password
 
 This repository is an implementation of an API used to generate a four digit which can be sent to the user via SMS 

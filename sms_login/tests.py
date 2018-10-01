@@ -29,10 +29,9 @@ class UserTestCase(unittest.TestCase):
         }
         self.dummy_phone = '09123456789'
         self.dummy_code = '1234'
-        self.dummy_token = '3794ca2d8007bb4cc44a56184ccf49becdd7ce73bc5eebd09817a20a1d7d91fa'
-        Users.objects.create(
-            phone_number=self.dummy_phone, four_digit_code=self.dummy_code)
-        Tokens.objects.create(user_id=1, token=self.dummy_token,)
+        Users.objects.create(phone_number=self.dummy_phone,four_digit_code=self.dummy_code)
+        Tokens.objects.create(user_id=1, token='1abcdef',)
+
 
     def test_create_valid_code(self):
         response = client.post(
@@ -58,18 +57,18 @@ class UserTestCase(unittest.TestCase):
     def test_existing_verification_code_valid(self):
         response = client.post(
             '/api/login/verify',
-            data={'phone_number': self.dummy_phone,
-                  'verification_code': self.dummy_code
-                  },
+            data={'phone_number': '09123456789',
+                    'verification_code': '1234'
+            },
             content_type='application/json')
         self.assertEqual(response.status_code, 200)
 
     def test_existing_verification_code_invalid(self):
         response = client.post(
             '/api/login/verify',
-            data={'phone_number': self.dummy_phone,
-                  'verification_code': '4321'
-                  },
+            data={'phone_number': '09123456789',
+                    'verification_code': '4321'
+            },
             content_type='application/json')
         self.assertEqual(response.status_code, 422)
 
@@ -103,26 +102,28 @@ class UserTestCase(unittest.TestCase):
             '/api/login/verify',
             data={
                 "phone_number": "09143134604",
-                "verification_code": self.dummy_code},
+                "verification_code": '1234'            },
             content_type='application/json')
         self.assertEqual(response.status_code, 422)
 
     def test_authorize(self):
         response = client.get(
             "/api/login/auth",
-            HTTP_TOKEN=self.dummy_token,
+            HTTP_TOKEN= '1abcdef',
             content_type='application/json')
         response_content = json.loads(response.content)
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response_content['phone_number'], self.dummy_phone)
+        self.assertEqual(response_content['phone_number'], '09123456789')
 
     def test_unauthorize(self):
         response = client.get(
             "/api/login/auth",
-            HTTP_TOKEN='35mnb4jh6tuy76ghb',
+            HTTP_TOKEN= '35mnb4jh6tuy76ghb',
             content_type='application/json')
         self.assertEqual(response.status_code, 401)
+
+
 
 
 if __name__ == '__main__':

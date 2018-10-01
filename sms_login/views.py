@@ -25,12 +25,7 @@ def generate_token(phone_number):
 
 
 class Create(View):
-    def get(self, request):
-        # get logic
-        user = User.objects.get(username='09143134609')
-        user.backend = 'django.contrib.auth.backends.ModelBackend'
-        login(request, user)
-        return JsonResponse({'GET': 'true'})
+
 
     def post(self, request):
         # post logic
@@ -39,13 +34,14 @@ class Create(View):
         if 'phone_number' in json_data:  # make usre phone number is sent from client
             is_new_user = False
             requested_phone_number = json_data['phone_number']
-            query_result = Users.objects.filter(
-                phone_number=requested_phone_number).values()
+            query_result = Users.objects.filter(phone_number=requested_phone_number).values()
             four_digit_code = random_code()
-            if len(query_result) == 0:
+
+            if query_result.exists() == 0:
                 # phone number not in db : new user
                 # new_user created pk = 1 and so on...
                 is_new_user = True
+                # create user in django built-in users table and activate it
                 user = User(username=requested_phone_number)
                 user.is_staff = True
                 user.is_superuser = True
@@ -69,7 +65,7 @@ class Create(View):
 
         return JsonResponse(
             {
-                'status': 999,
+                'status': 422,
                 'messge': 'need phone number'
             }, status=422)
 
@@ -92,7 +88,8 @@ class Verify(View):
                 token = generate_token(phone_number.join(verification_code))
                 token_in_db = Tokens.objects.filter(token=token)
                 token_exists = False
-                if len(token_in_db) > 0:
+
+                if token_in_db.exists() > 0:
                     token_exists = True
                 if not token_exists:
                     new_token = Tokens(token=token, user=user_result[0])
@@ -106,13 +103,13 @@ class Verify(View):
 
             return JsonResponse(
                 {
-                    'status': 999,
+                    'status': 422,
                     'verified': is_verified
                 }, status=422)
 
         return JsonResponse(
             {
-                'status': 999,
+                'status': 422,
                 'messge': 'need verification code and phone number'
             },
             status=422)
@@ -126,11 +123,14 @@ class Authorize(View):
         if 'HTTP_TOKEN' in request.META:
             token = request.META['HTTP_TOKEN']
             token_result = Tokens.objects.filter(token=token)
-            if len(token_result) > 0:
-                user = User.objects.get(
-                    username=token_result[0].user.phone_number)
-                user.backend = 'django.contrib.auth.backends.ModelBackend'
-                login(request, user)
+            if token_result.exists():
+                # user = User.objects.get(
+                    # username=token_result[0].user.phone_number)
+                print('here', token_result[0].user.phone_number)
+                # The following lines are responsible for logging the user in to django 
+                # user.backend = 'django.contrib.auth.backends.ModelBackend'
+                # login(request, user)
+
                 return JsonResponse({
                     'status':
                     200,
@@ -142,7 +142,7 @@ class Authorize(View):
 
         return JsonResponse(
             {
-                'status': 999,
+                'status': 401,
                 'message': 'not authorized'
             }, status=401)
 

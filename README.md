@@ -2,7 +2,8 @@
 ### An API based Django dashboard login with no password and a four digit SMS verification 
 
 This repository is an implementation of an API used to generate a four digit which can be sent to the user via SMS 
-for authentication.
+for authentication. It doesn't use the restAPI framework but the endpoints are handled in the Django sms_login app
+view.
 
 The API has four endpoints:
 * ```api/login/create```
